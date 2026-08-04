@@ -78,15 +78,18 @@ impl BandwidthEstimation {
         self.max_filter.get()
     }
 
-    pub(crate) const fn bw_from_delta(bytes: u64, delta: Duration) -> Option<u64> {
-        let window_duration_ns = delta.as_nanos();
-        if window_duration_ns == 0 {
-            return None;
-        }
-        let b_ns = bytes * 1_000_000_000;
-        let bytes_per_second = b_ns / (window_duration_ns as u64);
-        Some(bytes_per_second)
-    }
+	pub(crate) const fn bw_from_delta(bytes: u64, delta: Duration) -> Option<u64> {
+		let window_duration_ns = delta.as_nanos();
+		if window_duration_ns == 0 {
+			return None;
+		}
+		let bytes_per_second = bytes as u128 * 1_000_000_000 / window_duration_ns;
+		if bytes_per_second > u64::MAX as u128 {
+			Some(u64::MAX)
+		} else {
+			Some(bytes_per_second as u64)
+		}
+	}
 }
 
 impl Display for BandwidthEstimation {
@@ -97,4 +100,21 @@ impl Display for BandwidthEstimation {
             self.get_estimate() as f32 / (1024 * 1024) as f32
         )
     }
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn bandwidth_calculation_handles_large_values() {
+		assert_eq!(
+			BandwidthEstimation::bw_from_delta(u64::MAX, Duration::from_secs(1)),
+			Some(u64::MAX)
+		);
+		assert_eq!(
+			BandwidthEstimation::bw_from_delta(u64::MAX, Duration::from_nanos(1)),
+			Some(u64::MAX)
+		);
+	}
 }
