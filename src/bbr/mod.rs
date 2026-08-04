@@ -499,7 +499,7 @@ impl Controller for Bbr {
     fn metrics(&self) -> ControllerMetrics {
         let mut metrics = ControllerMetrics::default();
         metrics.congestion_window = self.window();
-        metrics.pacing_rate = Some(self.pacing_rate);
+        metrics.pacing_rate = (self.pacing_rate != 0).then_some(self.pacing_rate);
         metrics
     }
 
@@ -653,3 +653,18 @@ const K_MAX_INITIAL_CONGESTION_WINDOW: u64 = 200;
 
 const PROBE_RTT_BASED_ON_BDP: bool = true;
 const DRAIN_TO_TARGET: bool = true;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn omits_pacing_rate_until_initialized() {
+        let mut bbr = Bbr::new(Arc::new(BbrConfig::default()), BASE_DATAGRAM_SIZE as u16);
+
+        assert_eq!(bbr.metrics().pacing_rate, None);
+
+        bbr.pacing_rate = 42;
+        assert_eq!(bbr.metrics().pacing_rate, Some(42));
+    }
+}
