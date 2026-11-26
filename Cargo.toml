@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-quinn = { branch = "bbrv3", git = "https://github.com/Tipuch/quinn.git" }
-quinn-proto = { branch = "bbrv3", git = "https://github.com/Tipuch/quinn.git" }
+quinn = { branch = "bbrv3", git = "https://github.com/Tipuch/quinn.git", default-features = false }
+quinn-proto = { branch = "bbrv3", git = "https://github.com/Tipuch/quinn.git", default-features = false }
 rand = "0.10"
 rand_pcg = "0.10"
 
